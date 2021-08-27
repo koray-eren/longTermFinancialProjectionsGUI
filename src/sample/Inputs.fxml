@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="600.0" prefWidth="1400.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.InputsController">
+   <children>
+      <VBox alignment="TOP_CENTER" prefHeight="600.0" prefWidth="598.0">
+         <children>
+            <Pane style="-fx-background-color: navy;" VBox.vgrow="NEVER">
+               <VBox.margin>
+                  <Insets bottom="5.0" />
+               </VBox.margin>
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" text="Assumptions" textAlignment="CENTER" textFill="white">
+                     <font>
+                        <Font name="System Bold" size="15.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </Pane>
+            <TableView fx:id="assumptionsTable" prefHeight="61.0" prefWidth="598.0" />
+            <Pane layoutX="10.0" layoutY="10.0" style="-fx-background-color: navy;">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" text="Income" textAlignment="CENTER" textFill="white">
+                     <font>
+                        <Font name="System Bold" size="15.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+               </children>
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin>
+            </Pane>
+            <TableView fx:id="incomeInputs" prefHeight="177.0" prefWidth="598.0" />
+            <HBox alignment="CENTER">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#addIncome" text="Add">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button mnemonicParsing="false" onAction="#deleteIncome" text="Delete">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+            <Pane layoutX="10.0" layoutY="84.0" style="-fx-background-color: navy;">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" text="Expenses" textAlignment="CENTER" textFill="white">
+                     <font>
+                        <Font name="System Bold" size="15.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </Pane>
+            <TableView fx:id="expenseInputs" layoutX="10.0" layoutY="107.0" prefHeight="177.0" prefWidth="598.0" />
+            <HBox alignment="CENTER" layoutX="10.0" layoutY="277.0">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#addExpense" text="Add">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button mnemonicParsing="false" onAction="#deleteExpense" text="Delete">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <TabPane layoutX="598.0" prefHeight="600.0" prefWidth="802.0">
+         <tabs>
+            <Tab text="Cashflow">
+               <content>
+                  <AnchorPane prefWidth="802.0">
+                     <children>
+                        <TableView fx:id="incomeOutputs" layoutX="1.0" maxHeight="210.0" prefHeight="210.0" prefWidth="800.0" />
+                        <TableView fx:id="expenseOutputs" layoutX="1.0" layoutY="210.0" maxHeight="210.0" prefHeight="210.0" prefWidth="800.0" />
+                        <TableView fx:id="cashflowSummary" layoutX="1.0" layoutY="420.0" maxHeight="120.0" prefHeight="120.0" prefWidth="800.0" />
+                     </children>
+                  </AnchorPane>
+               </content>
+            </Tab>
+            <Tab text="Assets and Liabilities">
+               <content>
+                  <TableView prefHeight="600.0" prefWidth="802.0" />
+               </content>
+            </Tab>
+            <Tab text="Tax">
+               <content>
+                  <TableView prefHeight="600.0" prefWidth="802.0" />
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </children>
+</AnchorPane>
