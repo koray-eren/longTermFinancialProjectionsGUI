@@ -22,11 +22,20 @@ public class InputsController implements Initializable {
     private int years = 5;
     private static double indexation = 0.025;
 
-//    indices for items in cashflowSummary table - this table will always only these 3 items, with a potential
-//    fourth to be added later to show net cashflow allocation
-    private int TOTAL_INCOME_INDEX = 0;
-    private int TOTAL_EXPENSES_INDEX = 1;
-    private int NET_CASHFLOW_INDEX = 2;
+    private final double TAX_RATE = 0.3;
+
+    // indices for items in cashflowSummary table - this table will always only these 3 items, with a potential
+    // fourth to be added later to show net cashflow allocation
+    private final int TOTAL_INCOME_INDEX = 0;
+    private final int TOTAL_EXPENSES_INDEX = 1;
+    private final int NET_CASHFLOW_INDEX = 2;
+
+    // always present items in incomeOutputs table
+    private int ASSET_INCOME_INDEX = 0;
+    // incomeExpenses table
+    private int ASSET_EXPENSE_INDEX = 0;
+    private int LIABILITY_EXPENSE_INDEX = 1;
+    private int INCOME_TAX_INDEX = 2;
 
     @FXML
     private TableView assumptionsTable;
@@ -53,12 +62,15 @@ public class InputsController implements Initializable {
 
         addCashflowSummaryItems();
 
-        CashflowInput testIncome = new IncomeInput("test income", 10, 1, years, 1,true, indexation);
-        incomeOutputs.getItems().add(0, testIncome);
-        incomeInputs.getItems().add(0, testIncome);
+        addStandardOutputRows();
+
+        CashflowInput testIncome = new IncomeInput("test income", 1000, 1, years, 1,true, indexation);
+        incomeOutputs.getItems().add(testIncome);
+        incomeInputs.getItems().add(testIncome);
 
         try {
             updateCashflowSummary();
+            calculateTax();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,6 +115,7 @@ public class InputsController implements Initializable {
 
                 try {
                     updateCashflowSummary();
+                    refreshStandardOutputRows();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -139,6 +152,8 @@ public class InputsController implements Initializable {
                 addCashflowSummaryItems();
 
                 try {
+                    addStandardOutputRows();
+                    refreshStandardOutputRows();
                     updateCashflowSummary();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -167,6 +182,7 @@ public class InputsController implements Initializable {
 
                 try {
                     updateCashflowSummary();
+                    refreshStandardOutputRows();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -187,6 +203,7 @@ public class InputsController implements Initializable {
                 input.setAmount(event.getNewValue() );
                 input.updateData();
                 try {
+                    refreshStandardOutputRows();
                     updateCashflowSummary();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -208,6 +225,7 @@ public class InputsController implements Initializable {
                 input.setStartYear(event.getNewValue() );
                 input.updateData();
                 try {
+                    refreshStandardOutputRows();
                     updateCashflowSummary();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -229,6 +247,7 @@ public class InputsController implements Initializable {
                 input.setEndYear(event.getNewValue() );
                 input.updateData();
                 try {
+                    refreshStandardOutputRows();
                     updateCashflowSummary();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -254,6 +273,7 @@ public class InputsController implements Initializable {
                 incomeOutputs.refresh();
                 expenseOutputs.refresh();
                 try {
+                    refreshStandardOutputRows();
                     updateCashflowSummary();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -435,6 +455,11 @@ public class InputsController implements Initializable {
         }
     }
 
+    public double getYearData(CashflowInput input, int i) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method getAmountYearI = input.getClass().getMethod("getYear"+ (i + 1) );
+        return (Double) getAmountYearI.invoke(input);
+    }
+
     public void clearCashflowSummary() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         for (int x = 0; x < 3; x++) {
             for (int i = 0; i < years; i++) {
@@ -457,6 +482,40 @@ public class InputsController implements Initializable {
             exception.printStackTrace();
         }
         cashflowSummary.refresh();
+    }
+
+    public void calculateTax() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        for (int i = 0; i < years; i++) {
+            double taxAmount = 0;
+            for (int j = 0; j < incomeInputs.getItems().size(); j++) {
+                IncomeInput income = (IncomeInput) incomeInputs.getItems().get(j);
+                if( income.getIsTaxable() ){
+                    taxAmount += (getYearData(income, i) * TAX_RATE);
+                }
+            }
+            for (int j = 0; j < expenseInputs.getItems().size(); j++) {
+                ExpenseInput expense = (ExpenseInput) expenseInputs.getItems().get(j);
+                if( expense.getIsDeductible() ){
+                    taxAmount -= (getYearData(expense, i) * TAX_RATE);
+                }
+            }
+            ExpenseInput incomeTax = (ExpenseInput) expenseOutputs.getItems().get(INCOME_TAX_INDEX);
+            Method setterMethod = incomeTax.getClass().getMethod("setYear"+ (i + 1), new Class[] { double.class } );
+            taxAmount = Math.round( (taxAmount) * 100d) / 100d;
+            setterMethod.invoke(incomeTax, new Object[] { taxAmount } );
+        }
+    }
+    
+    public void addStandardOutputRows(){
+        incomeOutputs.getItems().add(ASSET_INCOME_INDEX, new IncomeInput("Asset Income", 0, 1, years, 1,true, indexation) );
+        // add standard line items: asset income, asset expenses, liability interest, tax
+        expenseOutputs.getItems().add(ASSET_EXPENSE_INDEX, new ExpenseInput("Asset Expenses", 0, 1, years, 1,false, indexation) );
+        expenseOutputs.getItems().add(LIABILITY_EXPENSE_INDEX, new ExpenseInput("Liability Interest", 0, 1, years, 1,false, indexation) );
+        expenseOutputs.getItems().add(INCOME_TAX_INDEX, new ExpenseInput("Income Tax", 0, 1, years, 1,false, indexation) );
+    }
+
+    public void refreshStandardOutputRows() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+        calculateTax();
     }
 
 }
