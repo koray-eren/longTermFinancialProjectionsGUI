@@ -258,7 +258,6 @@ public class InputsController implements Initializable {
             }
         });
 
-
         TableColumn frequencyColumn = new TableColumn<CashflowInput, Integer>("Frequency");
         frequencyColumn.setCellValueFactory(new PropertyValueFactory<CashflowInput, Integer>("frequency") );
         table.getColumns().add(frequencyColumn);
@@ -310,7 +309,15 @@ public class InputsController implements Initializable {
                 ExpenseInput input = event.getRowValue();
                 input.setDeductible(event.getNewValue() );
                 input.updateData();
+
                 incomeOutputs.refresh();
+                expenseOutputs.refresh();
+                try {
+                    refreshStandardOutputRows();
+                    updateCashflowSummary();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -334,32 +341,15 @@ public class InputsController implements Initializable {
         IncomeInput incomeInput = new IncomeInput("new income", indexation);
         incomeInputs.getItems().add(incomeInput);
         incomeOutputs.getItems().add(incomeInput);
+        refreshStandardOutputRows();
         updateCashflowSummary();
-
-        for (int i = 0; i < incomeOutputs.getItems().size(); i++) {
-            if (incomeOutputs.getItems().get(i) instanceof IncomeInput){
-                IncomeInput temp = (IncomeInput) incomeOutputs.getItems().get(i);
-                double taxableIncome = 0;
-                if (temp.getIsTaxable() ){
-                    for (int j = temp.getStartYear() + 1; j < temp.getEndYear() + 1; j++) {
-                        try {
-                            Method getterMethod = temp.getClass().getMethod("getYear"+j);
-                            Double tempAmount = (Double) getterMethod.invoke(temp);
-                            taxableIncome += tempAmount;
-                        } catch (Exception exception){
-                            exception.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
     }
 
     public void deleteIncome(ActionEvent e) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         CashflowInput temp = (CashflowInput) incomeInputs.getSelectionModel().getSelectedItem();
         incomeInputs.getItems().remove(temp );
         incomeOutputs.getItems().remove(temp );
+        refreshStandardOutputRows();
         updateCashflowSummary();
     }
 
@@ -367,6 +357,7 @@ public class InputsController implements Initializable {
         ExpenseInput expenseInput = new ExpenseInput("new expense", indexation);
         expenseInputs.getItems().add(expenseInput);
         expenseOutputs.getItems().add(expenseInput);
+        refreshStandardOutputRows();
         updateCashflowSummary();
     }
 
@@ -374,6 +365,7 @@ public class InputsController implements Initializable {
         CashflowInput temp = (CashflowInput) expenseInputs.getSelectionModel().getSelectedItem();
         expenseInputs.getItems().remove(temp );
         expenseOutputs.getItems().remove(temp );
+        refreshStandardOutputRows();
         updateCashflowSummary();
     }
 
@@ -420,21 +412,23 @@ public class InputsController implements Initializable {
 
     public void updateTotalExpenses() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         for (int i = 0; i < years; i++) {
+            Double totalExpensesYearI = 0.;
             for (int j = 0; j < expenseInputs.getItems().size(); j++) {
                 ExpenseInput expenseInput = (ExpenseInput) expenseInputs.getItems().get(j);
 
                 Method getterMethod = expenseInput.getClass().getMethod("getYear"+ (i + 1) );
-                Double tempAmount = (Double) getterMethod.invoke(expenseInput);
-
-                ExpenseInput incomeData = (ExpenseInput) cashflowSummary.getItems().get(1);
-
-                Method getterMethod2 = incomeData.getClass().getMethod("getYear"+ (i + 1) );
-                Double tempAmount2 = (Double) getterMethod2.invoke(incomeData);
-
-                double total = Math.round( (tempAmount + tempAmount2) * 100d) / 100d;
-                Method setterMethod = incomeData.getClass().getMethod("setYear"+ (i + 1), new Class[] { double.class } );
-                setterMethod.invoke(incomeData, new Object[] { total } );
+                totalExpensesYearI = (Double) getterMethod.invoke(expenseInput);
             }
+            ExpenseInput expenseSummaryObject = (ExpenseInput) cashflowSummary.getItems().get(1);
+
+            Method getterMethod2 = expenseSummaryObject.getClass().getMethod("getYear"+ (i + 1) );
+            Double tempAmount2 = (Double) getterMethod2.invoke(expenseSummaryObject);
+            ExpenseInput incomeTax = (ExpenseInput) expenseOutputs.getItems().get(INCOME_TAX_INDEX);
+            double taxYearI = getYearData(incomeTax, i);
+
+            double total = Math.round( (totalExpensesYearI + tempAmount2 + taxYearI) * 100d) / 100d;
+            Method setterMethod = expenseSummaryObject.getClass().getMethod("setYear"+ (i + 1), new Class[] { double.class } );
+            setterMethod.invoke(expenseSummaryObject, new Object[] { total } );
         }
     }
 
@@ -503,7 +497,9 @@ public class InputsController implements Initializable {
             Method setterMethod = incomeTax.getClass().getMethod("setYear"+ (i + 1), new Class[] { double.class } );
             taxAmount = Math.round( (taxAmount) * 100d) / 100d;
             setterMethod.invoke(incomeTax, new Object[] { taxAmount } );
+            incomeTax.getName();
         }
+        expenseOutputs.refresh();
     }
     
     public void addStandardOutputRows(){
